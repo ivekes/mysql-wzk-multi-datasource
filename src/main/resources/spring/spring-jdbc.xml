@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd 
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop.xsd 
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/jee
+		http://www.springframework.org/schema/jee/spring-jee.xsd
+		http://code.alibabatech.com/schema/dubbo 
+		http://code.alibabatech.com/schema/dubbo/dubbo.xsd"
+	default-lazy-init="true">
+	<description>Spring公共配置 </description>
+	<!-- 数据源属性文件读入 -->
+	<bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath*:properties/jdbc.properties</value>
+			</list>
+		</property>
+	</bean>
+	<!-- 配置druid数据源 -->
+	<bean id="masterdataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="url" value="${druid.url}" />
+		<property name="username" value="${druid.username}" />
+		<property name="password" value="${druid.password}" />
+		<property name="driverClassName" value="${druid.driverClassName}" />
+		<property name="filters" value="${druid.filters}" />
+		<property name="maxActive" value="${druid.maxActive}" />
+		<property name="initialSize" value="${druid.initialSize}" />
+		<property name="maxWait" value="${druid.maxWait}" />
+		<property name="minIdle" value="${druid.minIdle}" />
+		<property name="timeBetweenEvictionRunsMillis" value="${druid.timeBetweenEvictionRunsMillis}" />
+		<property name="minEvictableIdleTimeMillis" value="${druid.minEvictableIdleTimeMillis}" />
+		<property name="validationQuery" value="${druid.validationQuery}" />
+		<property name="testWhileIdle" value="${druid.testWhileIdle}" />
+		<property name="testOnBorrow" value="${druid.testOnBorrow}" />
+		<property name="testOnReturn" value="${druid.testOnReturn}" />
+		<property name="maxOpenPreparedStatements" value="${druid.maxOpenPreparedStatements}" />
+		<property name="removeAbandoned" value="${druid.removeAbandoned}" /> <!-- 打开removeAbandoned功能 -->
+		<property name="removeAbandonedTimeout" value="${druid.removeAbandonedTimeout}" /> <!-- 1800秒，也就是30分钟 -->
+		<property name="logAbandoned" value="${druid.logAbandoned}" /> <!-- 关闭abanded连接时输出错误日志 -->
+		<!-- 监控数据库 -->
+		<property name="proxyFilters">
+			<list>
+				<ref bean="log-filter" />
+			</list>
+		</property>
+	</bean>
+	<bean id="slaveDataSource0" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="url" value="${druid.urlSlave0}" />
+		<property name="username" value="${druid.usernameSlave0}" />
+		<property name="password" value="${druid.passwordSlave0}" />
+		<property name="driverClassName" value="${druid.driverClassName}" />
+		<property name="filters" value="${druid.filters}" />
+		<property name="maxActive" value="${druid.maxActive}" />
+		<property name="initialSize" value="${druid.initialSize}" />
+		<property name="maxWait" value="${druid.maxWait}" />
+		<property name="minIdle" value="${druid.minIdle}" />
+		<property name="timeBetweenEvictionRunsMillis" value="${druid.timeBetweenEvictionRunsMillis}" />
+		<property name="minEvictableIdleTimeMillis" value="${druid.minEvictableIdleTimeMillis}" />
+		<property name="validationQuery" value="${druid.validationQuery}" />
+		<property name="testWhileIdle" value="${druid.testWhileIdle}" />
+		<property name="testOnBorrow" value="${druid.testOnBorrow}" />
+		<property name="testOnReturn" value="${druid.testOnReturn}" />
+		<property name="maxOpenPreparedStatements" value="${druid.maxOpenPreparedStatements}" />
+		<property name="removeAbandoned" value="${druid.removeAbandoned}" /> <!-- 打开removeAbandoned功能 -->
+		<property name="removeAbandonedTimeout" value="${druid.removeAbandonedTimeout}" /> <!-- 1800秒，也就是30分钟 -->
+		<property name="logAbandoned" value="${druid.logAbandoned}" /> <!-- 关闭abanded连接时输出错误日志 -->
+		<!-- 监控数据库 -->
+		<property name="proxyFilters">
+			<list>
+				<ref bean="log-filter" />
+			</list>
+		</property>
+	</bean>
+	<!-- 多数据源 -->
+	<bean id="dataSource" class="com.wzk.core.RwDataSource">
+		<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<!-- write -->
+				<entry key="master" value-ref="masterdataSource"/>
+				<!-- read -->
+				<entry key="slave0" value-ref="slaveDataSource0"/>
+			</map>
+		</property>
+		<!-- 这里可以指定默认的数据源 -->
+		<property name="defaultTargetDataSource" ref="masterdataSource" />
+	</bean>
+	<!-- 配置MyBatis sqlSessionFactory，扫描所有mapper文件 -->
+	<bean id="appSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="mapperLocations" value="classpath*:com/wzk/mysql/dao/*.xml" />
+	</bean>
+	<!-- spring与mybatis整合配置，扫描所有Dao包路径 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.wzk.mysql.dao" />
+	</bean>
+</beans>
