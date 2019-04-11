@@ -10,6 +10,6 @@ import com.wzk.core.RwDataSourceHolder;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE,ElementType.METHOD})
 public @interface DynamicDataSourceAnnotation {
-    //dataSource 自定义注解的参数sdasffffff
+    //dataSource 自定义注解的参数sdasffffff222222222GGGGGG
     String dataSource() default RwDataSourceHolder.MASTER;
 }
